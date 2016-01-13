@@ -1,4 +1,4 @@
-# Ruby json_stream_trigger
+# Ruby `json_stream_trigger` Gem
 
 Instead of parsing a huge JSON files and loading it into memory,
 this library will stream the bytes through
@@ -14,7 +14,7 @@ Install with `gem "json_stream_trigger"` in your Gemfile.
 f = File.open('really_big_file.json')
 stream = JsonStreamTrigger.new()
 
-# Match each array item. Note, $.data would give you the whole array
+# Match each array item. If you wanted to whole array use $.data
 stream.on('$.data[*]') do |json_string|
   import JSON.parse(json_string, :quirks_mode => true)
 end
@@ -31,19 +31,20 @@ end
 
 ```
 
-The captured buffer will be passed to the block. Note, Ruby's JSON library expects
-JSON documents to be passed to it - not primatives - this is why `:quirks_mode => true` has been added
+The captured JSON strinb buffer will be passed to the block. Note, Ruby's JSON library expects
+JSON documents to be passed to it - not primatives - this is why `:quirks_mode => true` has been added.
 
 ## Path Details
 The JSONPaths are similar to XPath notation. `$` is the root,
-single wild card keys can be done with `$.docs[*].*.name`,
+single wild card keys can be done with `$.*.version`,
 or you can do muli-level wildcard with `$.docs..name`.
 [More info on JSONPath](http://goessner.net/articles/JsonPath/)
 
 A few more examples:
 
-```json
+```javascript
 {
+  meta: {version: 0.1},
   docs: [
     {id: 1},
     {id: 2},
@@ -67,4 +68,9 @@ on('$.docs[1].id') # returns value of ID 1
 on('$.docs[*].*.name') # returns 'Tyler'
 on('$..name') # matches any value who's key is 'name'
 ```
+
+
+
+## Tests
+`rake test`
 
