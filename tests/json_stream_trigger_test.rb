@@ -10,25 +10,25 @@ def refute_trigger(pattern, bytes)
   did_trigger = false
   stream.on(pattern) {did_trigger = true}
   stream << bytes
-  refute did_trigger, "'#{pattern}' triggered for '#{json}' and expected not to"
+  refute did_trigger, "'#{pattern}' triggered for '#{bytes}' and expected not to"
 end
 
 def assert_trigger(pattern, bytes, expected)
   if expected.is_a?(Array)
     call_seq = expected.dup
   else
-    call_seq = [expected]
+    call_seq = [expected.dup]
   end
   
   stream = JsonStreamTrigger.new  
   stream.on(pattern) do |actual_json|
     puts actual_json.inspect
-    assert_equal call_seq[0], actual_json
+    assert_equal call_seq[0], actual_json, "Did not return right json #{call_seq}"
     call_seq.shift
   end
   
   stream << bytes
-  assert call_seq.size == 0, "'#{pattern}' did not trigger for '#{expected}'"
+  assert call_seq.size == 0, "'#{pattern}' did not trigger for '#{bytes}'. Values not matched: #{call_seq}"
 end
 
   
@@ -37,7 +37,7 @@ describe JsonStreamTrigger do
   before do
     @stream = JsonStreamTrigger.new
   end
-
+  
   describe "#key_path" do 
     it "should start/end object path properly" do
       @stream << '{"docs": 3'
@@ -74,10 +74,9 @@ describe JsonStreamTrigger do
       assert_equal "$[1].list[1].k3[2].sk1", @stream.key_path
 
       # close out the object
-      @stream << '3} ] } ]'
-      assert_equal "$", @stream.key_path
+      @stream << '3} ] } ]  }]'
+      assert_equal "$", @stream.key_path, @stream.full_buffer
     end
-    
     
   end
 
@@ -88,7 +87,7 @@ describe JsonStreamTrigger do
     end
 
     it "buffers objects properly" do
-      assert_trigger('$..foo', '{"foo": {"bar": {"baz": "xyz"}}}', '{"bar":{"baz":"xyz"}}')
+      assert_trigger('$..foo', '{"foo": {"bar": {"baz": "xyz"}}  }', '{"bar":{"baz":"xyz"}}')
     end
     
     it "it escapes values properly" do
@@ -109,9 +108,14 @@ describe JsonStreamTrigger do
     end
     
     it "it triggers with empty arrays" do
-      #assert_trigger('$.my-array', '{"my-array": []}', '[]')
-      #assert_trigger('$.my-array', '{"my-array": [[],[]]}', '[[],[]]')
-      assert_trigger('$.my-array[*]', '{"my-array": [[],[]]}', ['[]', '[]'])
+      assert_trigger('$.my-array', '{"my-array": []}', '[]')
+      assert_trigger('$.my-array', '{"my-array": [[],[]]}', '[[],[]]')
+      assert_trigger('$.my-array[*]', '{"my-array": [[],[]] }', ['[]', '[]'])
+    end
+
+    it "it triggers with arrays of empty objects" do
+      assert_trigger('$.my-array', '{"my-array": [{},{}]}', '[{},{}]')
+      assert_trigger('$.my-array[*]', '{"my-array": [{},{}] }', ['{}', '{}'])
     end
     
   end

@@ -3,7 +3,7 @@ require 'json/stream'
 require_relative 'json_path'
 
 class JsonStreamTrigger
-  attr_reader :key_path, :triggers
+  attr_reader :key_path, :triggers, :full_buffer
   DEBUG=true
   
   def initialize()
@@ -17,10 +17,12 @@ class JsonStreamTrigger
     @parser.end_array      &method(:end_array)
     @parser.key            &method(:key)
     @parser.value          &method(:value)
-    
+
+    @last_call      = nil
     @key_path       = ''
     @triggers       = {}
     @active_buffers = {}
+    @full_buffer    = ''
   end
 
   def on(pattern, &block)
@@ -30,6 +32,7 @@ class JsonStreamTrigger
   def <<(bytes)
     debug "bytes: #{bytes.inspect}"
     @parser << bytes
+    @full_buffer << bytes if DEBUG
   end
   
   def path_matches?(pattern)
@@ -47,42 +50,51 @@ class JsonStreamTrigger
   
   def start_object
     debug "start object"
-    append_buffers ',{'
+    @key_path << (@key_path.empty? ? "$" : '')
     increment_path_array() do
       activate_buffers_for_matching()
     end
-    @key_path << (@key_path.empty? ? "$." : '.')
+    append_buffers ',{'
+    @last_call = :start_object
   end
   
   def end_object
     debug "end object"
+    append_buffers '}' if @last_call == :start_object
     trigger_block_for_matching()
-    append_buffers '}'
-    trim_segment(/[\.\$][^\.]+$/) # remove last .key
+    append_buffers '}' if @last_call != :start_object
+    trim_segment(/[\.\$][^\.\[\[]+$/) # remove last .key
+    @last_call = :end_object
   end
   
   def start_array
     debug "start array"
+    increment_path_array() do
+      activate_buffers_for_matching()
+    end
     append_buffers ',['
     @key_path << (@key_path.empty? ? "$[]" : "[]")
     activate_buffers_for_matching()
+    @last_call = :start_array
   end
   
   def end_array
     debug "end array"
     append_buffers ']'
     
-    trim_segment(/\[\d*\]+$/) # remove last [\d] and check triggers
+    trim_segment(/\[\d*\]+$/) # remove last [\d] and check triggers to match .my-array
     trigger_block_for_matching()
-    trim_segment(/[\.$][^\.]+$/) # remove last .key
+    trim_segment(/[\.$][^\.\[\]]+$/) # remove last .my-array
+    @last_call = :end_array
   end
   
   def key(k)
     debug "new key '#{k}'"
-    trim_segment(/[^\.\[\]]+$/) # remove last .key[\d]
-    @key_path << k
+    trim_segment(/\.[^\.\[\]]+$/) unless @last_call == :start_object# remove last .key[\d]
+    @key_path << ".#{k}"
     append_buffers ",\"#{k}\":"
     activate_buffers_for_matching()
+    @last_call = :key
   end
   
   def value(v)
@@ -95,6 +107,7 @@ class JsonStreamTrigger
     append_buffers JSON.dump(v)
     
     trigger_block_for_matching()
+    @last_call = :value
   end
   
   ################################ BUFFER STUFF ###########################
@@ -104,7 +117,7 @@ class JsonStreamTrigger
     @triggers.keys.each do |pattern|
       debug "checking #{@key_path} matches #{pattern}"
       if JsonPath.matches?(@key_path, pattern) && !@active_buffers.keys.include?(pattern)
-        debug "Activating buffer for #{pattern.inspect}"
+        debug ">> Activating buffer for #{pattern.inspect}"
         @active_buffers[pattern] = ''
       end
     end
@@ -115,11 +128,15 @@ class JsonStreamTrigger
     active_patterns = @active_buffers.keys
     active_patterns.each do |pattern|
       if JsonPath.matches?(@key_path, pattern)
-        debug "Calling trigger for '#{pattern}'"
+        debug "<< Calling trigger for '#{pattern}'"
         @triggers[pattern].call @active_buffers[pattern]
-        @active_buffers.delete(pattern)
-        debug "Clearing buffer for '#{pattern}'"
-        #@active_buffers[pattern] = ''
+        if pattern[-3..3] == '[*]'
+          @active_buffers[pattern] = ''
+          debug "Clearing buffer for '#{pattern}'"
+        else
+          @active_buffers.delete(pattern)
+          debug "Stopping buffer for '#{pattern}'"
+        end
       end
     end
   end
@@ -169,6 +186,7 @@ class JsonStreamTrigger
   def trim_segment(re)
     @key_path.sub!(re, '')
     @key_path << '$' if @key_path == '' # add back the $ if we trimmed it off
+    debug "  trimmed off #{re}"
   end
   
   def increment_path_array(&block)
