@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Tyler Roberts"]
   s.email       = 'code@polar-concepts.com'
   s.files       = Dir['README.md', 'lib/**/*']
-  s.homepage    = 'http://github.com/bdevel/my-gem'
+  s.homepage    = 'http://github.com/bdevel/json_stream_trigger'
   s.license       = 'MIT'
 end
 

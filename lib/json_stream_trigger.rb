@@ -4,13 +4,11 @@ require_relative 'json_path'
 
 class JsonStreamTrigger
   attr_reader :key_path, :triggers, :full_buffer
-  DEBUG=true
+  DEBUG=false
   
   def initialize()
     @parser = JSON::Stream::Parser.new
     
-    #start_document
-    #end_document
     @parser.start_object   &method(:start_object)
     @parser.end_object     &method(:end_object)
     @parser.start_array    &method(:start_array)
@@ -148,37 +146,9 @@ class JsonStreamTrigger
         bytes = bytes[1..-1]
       end
       @active_buffers[k] += "#{bytes}" 
-      # if ['[',']','{','}'].include?(bytes)
-      #   @active_buffers[k].sub!(/,$/, '') # remove trailing comma
-      #   @active_buffers[k] += "#{bytes}"
-      # elsif add_comma
-      #   @active_buffers[k] += "#{bytes}," # also append a comma incase in array
-      # else
-      #   @active_buffers[k] += "#{bytes}"
-      # end
-      
       debug "Appended to #{k} => '#{bytes}' to buffer '#{@active_buffers[k]}'"
     end
   end
-  
-  # def assign_value(obj, path, value)
-  #   parts     = path.split('.').first
-  #   index     = parts.shift
-  #   next_path = parts.join('.')
-    
-  #   # Only do assigment on last value of path
-  #   if next_path == ''
-  #     if at_index.is_a?(Array)
-  #       obj[index].push(value)
-  #     else
-  #       obj[index] = value
-  #     end
-  #   else
-  #     # Go to next level of path
-  #     assign_value(at_index, next_path, value)
-  #   end
-  # end
-
 
   ############################### PATH STUFF #######################
   

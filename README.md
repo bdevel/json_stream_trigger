@@ -1,10 +1,12 @@
-# json_stream_trigger
+# Ruby json_stream_trigger
 
 Instead of parsing a huge JSON files and loading it into memory,
 this library will stream the bytes through
 [json-stream](https://github.com/dgraham/json-stream) and only
 creates a small buffer for objects whose JSONPath matches a pattern you specify.
 When the object is completed, the specified block will be called.
+
+Install with `gem "json_stream_trigger"` in your Gemfile.
 
 ## Example:
 
@@ -13,13 +15,13 @@ f = File.open('really_big_file.json')
 stream = JsonStreamTrigger.new()
 
 # Match each array item. Note, $.data would give you the whole array
-stream.on('$.data[*]') do |hash|
-  import(hash)
+stream.on('$.data[*]') do |json_string|
+  import JSON.parse(json_string, :quirks_mode => true)
 end
 
 # Will match for $.any.sub[*].item.meta
-stream.on('$..meta') do |hash|
-  save_meta(hash)
+stream.on('$..meta') do |json_string|
+  save_meta JSON.parse(json_string, :quirks_mode => true)
 end
 
 # read in 1MB chunks
@@ -28,6 +30,9 @@ while chunk = f.read(1024)
 end
 
 ```
+
+The captured buffer will be passed to the block. Note, Ruby's JSON library expects
+JSON documents to be passed to it - not primatives - this is why `:quirks_mode => true` has been added
 
 ## Path Details
 The JSONPaths are similar to XPath notation. `$` is the root,

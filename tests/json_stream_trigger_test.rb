@@ -22,7 +22,6 @@ def assert_trigger(pattern, bytes, expected)
   
   stream = JsonStreamTrigger.new  
   stream.on(pattern) do |actual_json|
-    puts actual_json.inspect
     assert_equal call_seq[0], actual_json, "Did not return right json #{call_seq}"
     call_seq.shift
   end
