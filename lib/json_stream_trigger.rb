@@ -126,7 +126,7 @@ class JsonStreamTrigger
     active_patterns = @active_buffers.keys
     active_patterns.each do |pattern|
       if JsonPath.matches?(@key_path, pattern)
-        debug "<< Calling trigger for '#{pattern}'"
+        debug "<< Calling trigger for '#{pattern}' when at #{@key_path}"
         @triggers[pattern].call @active_buffers[pattern]
         if pattern[-3..3] == '[*]'
           @active_buffers[pattern] = ''

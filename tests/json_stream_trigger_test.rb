@@ -116,6 +116,12 @@ describe JsonStreamTrigger do
       assert_trigger('$.my-array', '{"my-array": [{},{}]}', '[{},{}]')
       assert_trigger('$.my-array[*]', '{"my-array": [{},{}] }', ['{}', '{}'])
     end
+
+
+    it "it triggers with star on base" do
+      assert_trigger('$.*', '{"my-obj": {"foo": 123, "bar": 456} }', '{"foo":123,"bar":456}')
+      assert_trigger('$.*', '{"my-array": [{},{}]}', '[{},{}]')
+    end
     
   end
   

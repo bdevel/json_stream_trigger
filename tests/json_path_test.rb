@@ -25,13 +25,19 @@ describe JsonPath do
       assert_path_match('$.foo[1].xxx.bar', '$.foo[*].*.bar')
       assert_path_match('$.foo[1].bar', '$..bar')
       assert_path_match('$.foo[1]', '$.*[*]')
+      
+      assert_path_match('$.foo.bar', '$.*.bar')
+      assert_path_match('$.foo', '$.*')
+      
     end
     
     it "does not match things it shouldn't" do
       refute_path_match '$.foobar', '$.foo'
+      refute_path_match '$.food.bar', '$.foo..bar'
       refute_path_match '$.foo.bar', '$..foo'
       refute_path_match('$.foo.xxx.yyy.bar', '$.foo.*.bar')
-      assert_path_match('$.foo.bar[1]', '$.*[*]')
+      refute_path_match('$.foo.bar[1]', '$.*[*]')
+      refute_path_match('$.foo.bar', '$.*')
     end
     
   end
