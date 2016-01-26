@@ -88,6 +88,7 @@ class JsonStreamTrigger
   
   def key(k)
     debug "new key '#{k}'"
+    trigger_block_for_matching() if @last_call == :end_object # to match $.* when closing an object
     trim_segment(/\.[^\.\[\]]+$/) unless @last_call == :start_object# remove last .key[\d]
     @key_path << ".#{k}"
     append_buffers ",\"#{k}\":"
