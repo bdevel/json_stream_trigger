@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'json_stream_trigger'
-  s.version     = '0.1'
+  s.version     = '0.1.1'
   s.date        = '2016-01-12'
   s.summary     = "Parse large JSON files as a stream and trigger events upon key matching."
   s.description = ""
@@ -9,5 +9,7 @@ Gem::Specification.new do |s|
   s.files       = Dir['README.md', 'lib/**/*']
   s.homepage    = 'http://github.com/bdevel/json_stream_trigger'
   s.license       = 'MIT'
+
+  s.add_runtime_dependency "json-stream"
 end
 

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    my-gem (0.1)
+    json_stream_trigger (0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -14,5 +14,8 @@ PLATFORMS
 
 DEPENDENCIES
   json-stream
+  json_stream_trigger!
   minitest
-  my-gem!
+
+BUNDLED WITH
+   1.10.6

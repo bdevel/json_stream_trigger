@@ -24,12 +24,14 @@ describe JsonPath do
       assert_path_match('$.foo[1].xxx.yyy.bar', '$.foo[*]..bar')
       assert_path_match('$.foo[1].xxx.bar', '$.foo[*].*.bar')
       assert_path_match('$.foo[1].bar', '$..bar')
+      assert_path_match('$.foo[1]', '$.*[*]')
     end
     
     it "does not match things it shouldn't" do
       refute_path_match '$.foobar', '$.foo'
       refute_path_match '$.foo.bar', '$..foo'
       refute_path_match('$.foo.xxx.yyy.bar', '$.foo.*.bar')
+      assert_path_match('$.foo.bar[1]', '$.*[*]')
     end
     
   end
