@@ -10,6 +10,6 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://github.com/bdevel/json_stream_trigger'
   s.license       = 'MIT'
 
-  s.add_runtime_dependency "json-stream"
+  s.add_runtime_dependency "json-stream", '~> 0'
 end
 
